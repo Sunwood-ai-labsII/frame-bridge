@@ -113,32 +113,57 @@ class VideoProcessor:
             if error2:
                 return None, None, 0.0, error2, (0, 0)
             
-            # 動画1の実際の最後から2つ目のフレームを取得
+            # 動画の総フレーム数を正確に取得
             cap1 = cv2.VideoCapture(video1_path)
+            if not cap1.isOpened():
+                return None, None, 0.0, "動画1を開けませんでした", (0, 0)
             total_frames1 = int(cap1.get(cv2.CAP_PROP_FRAME_COUNT))
             cap1.release()
             
             cap2 = cv2.VideoCapture(video2_path)
+            if not cap2.isOpened():
+                return None, None, 0.0, "動画2を開けませんでした", (0, 0)
             total_frames2 = int(cap2.get(cv2.CAP_PROP_FRAME_COUNT))
             cap2.release()
             
-            # 実際のフレームインデックスを計算
-            idx1 = total_frames1 - 2  # 最後から2つ目（0ベース）
-            idx2 = 1  # 最初から2つ目（0ベース）
+            logger.info(f"📊 動画1総フレーム数: {total_frames1}")
+            logger.info(f"📊 動画2総フレーム数: {total_frames2}")
+            
+            # フレーム数の妥当性チェック
+            if total_frames1 < 3:
+                return None, None, 0.0, f"動画1のフレーム数が不足しています（{total_frames1}フレーム、最低3フレーム必要）", (0, 0)
+            
+            if total_frames2 < 3:
+                return None, None, 0.0, f"動画2のフレーム数が不足しています（{total_frames2}フレーム、最低3フレーム必要）", (0, 0)
+            
+            # 実際のフレームインデックスを計算（0ベース）
+            idx1 = total_frames1 - 2  # 最後から2つ目
+            idx2 = 1  # 最初から2つ目
+            
+            logger.info(f"🎯 計算されたフレームインデックス: 動画1[{idx1}] (最後から2つ目), 動画2[{idx2}] (最初から2つ目)")
             
             # 該当フレームを直接取得
             cap1 = cv2.VideoCapture(video1_path)
+            if not cap1.isOpened():
+                return None, None, 0.0, "動画1の再オープンに失敗しました", (0, 0)
+            
             cap1.set(cv2.CAP_PROP_POS_FRAMES, idx1)
             ret1, frame1_bgr = cap1.read()
             cap1.release()
             
+            if not ret1:
+                return None, None, 0.0, f"動画1のフレーム[{idx1}]の取得に失敗しました", (0, 0)
+            
             cap2 = cv2.VideoCapture(video2_path)
+            if not cap2.isOpened():
+                return None, None, 0.0, "動画2の再オープンに失敗しました", (0, 0)
+            
             cap2.set(cv2.CAP_PROP_POS_FRAMES, idx2)
             ret2, frame2_bgr = cap2.read()
             cap2.release()
             
-            if not ret1 or not ret2:
-                return None, None, 0.0, "指定フレームの取得に失敗しました", (0, 0)
+            if not ret2:
+                return None, None, 0.0, f"動画2のフレーム[{idx2}]の取得に失敗しました", (0, 0)
             
             # BGR to RGB変換
             frame1 = cv2.cvtColor(frame1_bgr, cv2.COLOR_BGR2RGB)
