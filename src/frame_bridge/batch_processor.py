@@ -14,18 +14,16 @@ from .video_processor import FrameBridge
 class BatchProcessor:
     """バッチ処理を行うクラス"""
     
-    def __init__(self, output_dir: str = "output", exclude_edge_frames: bool = True):
+    def __init__(self, output_dir: str = "output"):
         """
         初期化
         
         Args:
             output_dir: 出力ディレクトリ
-            exclude_edge_frames: 最初と最後のフレームを除外するかどうか
         """
-        self.frame_bridge = FrameBridge(exclude_edge_frames=exclude_edge_frames)
+        self.frame_bridge = FrameBridge()
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
-        self.exclude_edge_frames = exclude_edge_frames
         
         # サポートする動画形式
         self.supported_formats = ['.mp4', '.avi', '.mov', '.mkv', '.wmv', '.flv', '.webm']
