@@ -16,16 +16,9 @@ from loguru import logger
 class VideoProcessor:
     """動画処理を行うメインクラス"""
     
-    def __init__(self, similarity_threshold: float = 0.3, exclude_edge_frames: bool = True):
-        """
-        初期化
-        
-        Args:
-            similarity_threshold: フレーム類似度の閾値
-            exclude_edge_frames: 最初と最後のフレームを除外するかどうか
-        """
-        self.similarity_threshold = similarity_threshold
-        self.exclude_edge_frames = exclude_edge_frames
+    def __init__(self):
+        """初期化"""
+        pass
         
     def extract_frames(self, video_path: str, num_frames: int = 20) -> Tuple[Optional[List], Optional[str]]:
         """
@@ -100,15 +93,15 @@ class VideoProcessor:
 
     def find_best_connection_frames(self, video1_path: str, video2_path: str) -> Tuple[Optional[np.ndarray], Optional[np.ndarray], float, Optional[str], Tuple[int, int]]:
         """
-        2つの動画の最適な接続フレームを見つける
-        動画1の最後から2つ目のフレームと動画2の最初から2つ目のフレームを結合
+        2つの動画の接続フレームを取得する
+        動画1の最後から2つ目のフレームと動画2の最初から2つ目のフレームを使用
         
         Args:
             video1_path: 動画1のパス
             video2_path: 動画2のパス
             
         Returns:
-            Tuple[最適フレーム1, 最適フレーム2, 類似度, エラーメッセージ, フレームインデックス]
+            Tuple[フレーム1, フレーム2, 類似度, エラーメッセージ, フレームインデックス]
         """
         try:
             # 各動画からフレームを抽出
@@ -283,14 +276,9 @@ class VideoProcessor:
 class FrameBridge:
     """Frame Bridge メインクラス"""
     
-    def __init__(self, exclude_edge_frames: bool = True):
-        """
-        初期化
-        
-        Args:
-            exclude_edge_frames: 最初と最後のフレームを除外するかどうか
-        """
-        self.processor = VideoProcessor(exclude_edge_frames=exclude_edge_frames)
+    def __init__(self):
+        """初期化"""
+        self.processor = VideoProcessor()
     
     def process_video_bridge(self, video1_path: str, video2_path: str) -> Tuple[str, Optional[str], Optional[str], Optional[str], float]:
         """

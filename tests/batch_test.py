@@ -21,8 +21,7 @@ def main():
     parser = argparse.ArgumentParser(description="Frame Bridge - バッチ動画結合")
     parser.add_argument("--input", "-i", default="assets/example/REI/input", help="入力フォルダ (デフォルト: examples/assets/example/REI/input)")
     parser.add_argument("--output", "-o", default="assets/example/REI/output", help="出力フォルダ (デフォルト: examples/assets/example/REI/output)")
-    parser.add_argument("--exclude-edge", action="store_true", default=True, help="最初と最後のフレームを除外 (デフォルト: True)")
-    parser.add_argument("--include-edge", action="store_true", help="最初と最後のフレームを含める")
+
     parser.add_argument("--mode", "-m", choices=["sequential", "pairwise"], default="sequential", 
                        help="結合モード: sequential(順次結合) または pairwise(ペア結合)")
     parser.add_argument("--filename", "-f", default="merged_sequence.mp4", help="出力ファイル名 (sequentialモードのみ)")
@@ -42,14 +41,9 @@ def main():
         logger.error(f"❌ 入力フォルダが見つかりません: {args.input}")
         return
     
-    # エッジフレーム除外設定
-    exclude_edge_frames = not args.include_edge if args.include_edge else args.exclude_edge
-    
-    logger.info(f"🎯 エッジフレーム除外: {'有効' if exclude_edge_frames else '無効'}")
-    
     # バッチプロセッサを初期化
     logger.info("🔧 バッチプロセッサを初期化中...")
-    processor = BatchProcessor(output_dir=args.output, exclude_edge_frames=exclude_edge_frames)
+    processor = BatchProcessor(output_dir=args.output)
     
     # 動画ファイルの確認
     logger.info("📂 動画ファイルをスキャン中...")
