@@ -94,7 +94,7 @@ class VideoProcessor:
     def find_best_connection_frames(self, video1_path: str, video2_path: str) -> Tuple[Optional[np.ndarray], Optional[np.ndarray], float, Optional[str], Tuple[int, int]]:
         """
         2つの動画の接続フレームを取得する
-        動画1の最後から2つ目のフレームと動画2の最初から2つ目のフレームを使用
+        動画1の最後から2番目のフレームと動画2の最初から2番目のフレームを使用
         
         Args:
             video1_path: 動画1のパス
@@ -137,10 +137,13 @@ class VideoProcessor:
                 return None, None, 0.0, f"動画2のフレーム数が不足しています（{total_frames2}フレーム、最低3フレーム必要）", (0, 0)
             
             # 実際のフレームインデックスを計算（0ベース）
-            idx1 = total_frames1 - 2  # 最後から2つ目
-            idx2 = 1  # 最初から2つ目
+            # 総フレーム数119の場合: 最後=118, 最後から2番目=117
+            idx1 = total_frames1 - 2  # 最後から2番目のフレーム
+            idx2 = 1  # 最初から2番目のフレーム
             
-            logger.info(f"🎯 計算されたフレームインデックス: 動画1[{idx1}] (最後から2つ目), 動画2[{idx2}] (最初から2つ目)")
+            logger.info(f"🎯 フレームインデックス詳細:")
+            logger.info(f"   動画1: 総フレーム数{total_frames1} → 最後のフレーム[{total_frames1-1}] → 最後から2番目[{idx1}]")
+            logger.info(f"   動画2: 総フレーム数{total_frames2} → 最初のフレーム[0] → 最初から2番目[{idx2}]")
             
             # 該当フレームを直接取得
             cap1 = cv2.VideoCapture(video1_path)
@@ -172,7 +175,7 @@ class VideoProcessor:
             # 類似度を計算
             similarity = self.calculate_frame_similarity(frame1, frame2)
             
-            logger.info(f"🔗 固定フレーム結合: 動画1[{idx1}] (最後から2つ目) → 動画2[{idx2}] (最初から2つ目)")
+            logger.info(f"🔗 固定フレーム結合: 動画1[{idx1}] (最後から2番目) → 動画2[{idx2}] (最初から2番目)")
             logger.info(f"📊 フレーム類似度: {similarity:.3f}")
             
             return frame1, frame2, similarity, None, (idx1, idx2)
@@ -378,11 +381,11 @@ class FrameBridge:
 📊 分析結果:
 • フレーム類似度: {similarity:.3f}
 • 接続品質: {quality}
-• 結合フレーム: 動画1[{indices[0]}] (最後から2つ目) → 動画2[{indices[1]}] (最初から2つ目)
+• 結合フレーム: 動画1[{indices[0]}] (最後から2番目) → 動画2[{indices[1]}] (最初から2番目)
 
 💡 結合情報:
-• 動画1の最後から2つ目のフレームで終了
-• 動画2の最初から2つ目のフレームから開始
+• 動画1の最後から2番目のフレームで終了
+• 動画2の最初から2番目のフレームから開始
 • 固定位置での確実な接続を実現
 
 📁 出力ファイル: {os.path.basename(output_path)}"""
