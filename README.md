@@ -12,7 +12,7 @@ sdk_version: 5.42.0
 
 <div align="center">
 
-![Wikipedia to Markdown Converter](https://github.com/user-attachments/assets/201c0b39-6bf7-4599-a62a-dd3e6f61e5f8)
+![frame-bridge](https://github.com/user-attachments/assets/05977e5b-3e63-4ed2-a5f6-74ada8943994)
 
 # 📚 Wikipedia to Markdown Converter
 
