@@ -206,3 +206,8 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 .SourceSageAssets/
+assets/*.mp4
+uv.lock
+assets/example/REI/input/*.mp4
+assets/example/REI/output/*.mp4
+assets/example/REI/output/batch_report.txt
