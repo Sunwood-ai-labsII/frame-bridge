@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  wikipedia-converter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "7861:7860"
+    environment:
+      - PYTHONUNBUFFERED=1
+    # volumes:
+      # 開発時にコードの変更を反映させたい場合はコメントアウト
+      # - .:/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7861"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - wikipedia-network
+
+networks:
+  wikipedia-network:
+    driver: bridge
