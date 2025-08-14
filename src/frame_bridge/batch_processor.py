@@ -5,14 +5,10 @@ Frame Bridge - Batch Processing Module
 
 import os
 import glob
-import logging
 from pathlib import Path
 from typing import List, Tuple, Optional
+from loguru import logger
 from .video_processor import FrameBridge
-
-# ログ設定
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 class BatchProcessor:

@@ -211,3 +211,5 @@ uv.lock
 assets/example/REI/input/*.mp4
 assets/example/REI/output/*.mp4
 assets/example/REI/output/batch_report.txt
+assets/example/REI/input/**/*.png
+

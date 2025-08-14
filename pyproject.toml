@@ -46,6 +46,7 @@ dependencies = [
     "pillow>=10.0.0",
     "gradio>=5.42.0",
     "scikit-image>=0.21.0",
+    "sourcesage>=6.2.0",
 ]
 
 [project.optional-dependencies]
