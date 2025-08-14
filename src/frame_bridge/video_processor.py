@@ -113,17 +113,36 @@ class VideoProcessor:
             if error2:
                 return None, None, 0.0, error2, (0, 0)
             
-            # 動画1の最後から2つ目のフレームを取得
-            if len(frames1) < 2:
-                return None, None, 0.0, "動画1のフレーム数が不足しています", (0, 0)
+            # 動画1の実際の最後から2つ目のフレームを取得
+            cap1 = cv2.VideoCapture(video1_path)
+            total_frames1 = int(cap1.get(cv2.CAP_PROP_FRAME_COUNT))
+            cap1.release()
             
-            # 動画2の最初から2つ目のフレームを取得
-            if len(frames2) < 2:
-                return None, None, 0.0, "動画2のフレーム数が不足しています", (0, 0)
+            cap2 = cv2.VideoCapture(video2_path)
+            total_frames2 = int(cap2.get(cv2.CAP_PROP_FRAME_COUNT))
+            cap2.release()
             
-            # 最後から2つ目と最初から2つ目のフレームを選択
-            idx1, frame1 = frames1[-2]  # 最後から2つ目
-            idx2, frame2 = frames2[1]   # 最初から2つ目
+            # 実際のフレームインデックスを計算
+            idx1 = total_frames1 - 2  # 最後から2つ目（0ベース）
+            idx2 = 1  # 最初から2つ目（0ベース）
+            
+            # 該当フレームを直接取得
+            cap1 = cv2.VideoCapture(video1_path)
+            cap1.set(cv2.CAP_PROP_POS_FRAMES, idx1)
+            ret1, frame1_bgr = cap1.read()
+            cap1.release()
+            
+            cap2 = cv2.VideoCapture(video2_path)
+            cap2.set(cv2.CAP_PROP_POS_FRAMES, idx2)
+            ret2, frame2_bgr = cap2.read()
+            cap2.release()
+            
+            if not ret1 or not ret2:
+                return None, None, 0.0, "指定フレームの取得に失敗しました", (0, 0)
+            
+            # BGR to RGB変換
+            frame1 = cv2.cvtColor(frame1_bgr, cv2.COLOR_BGR2RGB)
+            frame2 = cv2.cvtColor(frame2_bgr, cv2.COLOR_BGR2RGB)
             
             # 類似度を計算
             similarity = self.calculate_frame_similarity(frame1, frame2)
