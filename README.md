@@ -1,12 +1,12 @@
 ---
 license: mit
-title: wikipedia to markdown
+title: frame bridge
 sdk: gradio
-emoji: 📚
-colorFrom: yellow
-colorTo: gray
+emoji: 🏆
+colorFrom: red
+colorTo: indigo
 thumbnail: >-
-  https://cdn-uploads.huggingface.co/production/uploads/64e0ef4a4c78e1eba5178d7a/vJQZ24fctExV3dax_BGU-.jpeg
+  https://cdn-uploads.huggingface.co/production/uploads/64e0ef4a4c78e1eba5178d7a/BZfofcX1vEF7kwWQ0i-uB.png
 sdk_version: 5.42.0
 ---
 
