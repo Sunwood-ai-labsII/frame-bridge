@@ -10,11 +10,7 @@ import tempfile
 import os
 from skimage.metrics import structural_similarity as ssim
 from typing import Tuple, List, Optional, Union
-import logging
-
-# ログ設定
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 
 class VideoProcessor:
@@ -51,7 +47,7 @@ class VideoProcessor:
             if total_frames == 0:
                 return None, "動画にフレームが見つかりませんでした"
             
-            logger.info(f"動画 {video_path}: 総フレーム数 {total_frames}")
+            logger.info(f"📹 動画解析: {os.path.basename(video_path)} (総フレーム数: {total_frames})")
             
             frames = []
             # 最初と最後のフレームを含む等間隔でフレームを抽出
@@ -66,7 +62,7 @@ class VideoProcessor:
                     frames.append((frame_idx, frame_rgb))
             
             cap.release()
-            logger.info(f"フレーム抽出完了: {len(frames)}フレーム")
+            logger.success(f"✅ フレーム抽出完了: {len(frames)}フレーム")
             return frames, None
             
         except Exception as e:
@@ -105,7 +101,7 @@ class VideoProcessor:
     def find_best_connection_frames(self, video1_path: str, video2_path: str) -> Tuple[Optional[np.ndarray], Optional[np.ndarray], float, Optional[str], Tuple[int, int]]:
         """
         2つの動画の最適な接続フレームを見つける
-        動画2の最初のフレームと動画1の全フレームから最も類似したフレームを探索
+        動画1の最後から2つ目のフレームと動画2の最初から2つ目のフレームを結合
         
         Args:
             video1_path: 動画1のパス
@@ -116,54 +112,33 @@ class VideoProcessor:
         """
         try:
             # 各動画からフレームを抽出
-            frames1, error1 = self.extract_frames(video1_path, 30)  # より多くのフレームを抽出
+            frames1, error1 = self.extract_frames(video1_path, 30)
             if error1:
                 return None, None, 0.0, error1, (0, 0)
             
-            frames2, error2 = self.extract_frames(video2_path, 10)  # 動画2は少なめでOK
+            frames2, error2 = self.extract_frames(video2_path, 10)
             if error2:
                 return None, None, 0.0, error2, (0, 0)
             
-            # エッジフレーム除外オプションの適用
-            if self.exclude_edge_frames:
-                # 最初と最後のフレームを除外
-                frames1_filtered = frames1[1:-1] if len(frames1) > 2 else frames1
-                frames2_filtered = frames2[1:-1] if len(frames2) > 2 else frames2
-                logger.info(f"エッジフレーム除外: 動画1 {len(frames1)} → {len(frames1_filtered)}フレーム, 動画2 {len(frames2)} → {len(frames2_filtered)}フレーム")
-            else:
-                frames1_filtered = frames1
-                frames2_filtered = frames2
-                logger.info("エッジフレーム除外: 無効")
+            # 動画1の最後から2つ目のフレームを取得
+            if len(frames1) < 2:
+                return None, None, 0.0, "動画1のフレーム数が不足しています", (0, 0)
             
-            # 動画2の最初の数フレームを基準にする（より高精度な探索）
-            video2_start_frames = frames2_filtered[:3]  # 動画2の最初の3フレーム（エッジ除外後）
+            # 動画2の最初から2つ目のフレームを取得
+            if len(frames2) < 2:
+                return None, None, 0.0, "動画2のフレーム数が不足しています", (0, 0)
             
-            best_similarity = -1
-            best_frame1 = None
-            best_frame2 = None
-            best_indices = (0, 0)
+            # 最後から2つ目と最初から2つ目のフレームを選択
+            idx1, frame1 = frames1[-2]  # 最後から2つ目
+            idx2, frame2 = frames2[1]   # 最初から2つ目
             
-            logger.info(f"フレーム類似度分析開始: 動画2の最初の{len(video2_start_frames)}フレームと動画1の{len(frames1_filtered)}フレームを比較...")
+            # 類似度を計算
+            similarity = self.calculate_frame_similarity(frame1, frame2)
             
-            # 動画2の各開始フレームについて、動画1の全フレームと比較
-            for j, (idx2, frame2) in enumerate(video2_start_frames):
-                logger.info(f"動画2のフレーム[{idx2}]との比較開始...")
-                
-                for i, (idx1, frame1) in enumerate(frames1_filtered):
-                    similarity = self.calculate_frame_similarity(frame1, frame2)
-                    logger.info(f"  動画1[{idx1}] vs 動画2[{idx2}]: 類似度 {similarity:.3f}")
-                    
-                    if similarity > best_similarity:
-                        best_similarity = similarity
-                        best_frame1 = frame1
-                        best_frame2 = frame2
-                        best_indices = (idx1, idx2)
-                        logger.info(f"  🌟 新しい最高類似度: {similarity:.3f} (動画1[{idx1}] → 動画2[{idx2}])")
+            logger.info(f"🔗 固定フレーム結合: 動画1[{idx1}] (最後から2つ目) → 動画2[{idx2}] (最初から2つ目)")
+            logger.info(f"📊 フレーム類似度: {similarity:.3f}")
             
-            logger.info(f"最適接続点検出完了: 類似度 {best_similarity:.3f}")
-            logger.info(f"最適結合点: 動画1のフレーム[{best_indices[0]}] → 動画2のフレーム[{best_indices[1]}]")
-            
-            return best_frame1, best_frame2, best_similarity, None, best_indices
+            return frame1, frame2, similarity, None, (idx1, idx2)
             
         except Exception as e:
             logger.error(f"フレーム比較エラー: {e}")
@@ -200,7 +175,7 @@ class VideoProcessor:
             width1 = int(cap1.get(cv2.CAP_PROP_FRAME_WIDTH))
             height1 = int(cap1.get(cv2.CAP_PROP_FRAME_HEIGHT))
             
-            logger.info(f"動画1情報: {width1}x{height1}, {fps1}fps")
+            logger.info(f"🎬 動画設定: {width1}x{height1}, {fps1}fps")
             
             # 出力動画の設定（最初の動画の設定を使用）
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -215,7 +190,7 @@ class VideoProcessor:
                 out.write(frame)
                 frame_count += 1
             
-            logger.info(f"動画1から {frame_count} フレームを結合")
+            logger.info(f"📹 動画1結合: {frame_count}フレーム")
             
             # 動画2のcut_frame2から最後まで
             cap2.set(cv2.CAP_PROP_POS_FRAMES, cut_frame2)
@@ -230,14 +205,14 @@ class VideoProcessor:
                 out.write(frame)
                 frame_count2 += 1
             
-            logger.info(f"動画2から {frame_count2} フレームを結合")
+            logger.info(f"📹 動画2結合: {frame_count2}フレーム")
             
             # リソースを解放
             cap1.release()
             cap2.release()
             out.release()
             
-            logger.info(f"動画結合完了: {output_path}")
+            logger.success(f"✅ 動画結合完了: {os.path.basename(output_path)}")
             return True, None
             
         except Exception as e:
@@ -263,7 +238,7 @@ class VideoProcessor:
             pil_image = Image.fromarray(frame)
             pil_image.save(file_path)
             
-            logger.info(f"フレーム画像保存: {file_path}")
+            logger.debug(f"🖼️ フレーム画像保存: {os.path.basename(file_path)}")
             return file_path
             
         except Exception as e:
@@ -335,7 +310,7 @@ class FrameBridge:
             return "指定された動画ファイルが見つかりません。", None, None, None, 0.0
         
         try:
-            logger.info("動画分析開始...")
+            logger.info("🔍 動画分析開始...")
             
             # 最適な接続フレームを見つける
             frame1, frame2, similarity, error, indices = self.processor.find_best_connection_frames(video1_path, video2_path)
@@ -343,13 +318,13 @@ class FrameBridge:
             if error:
                 return f"エラー: {error}", None, None, None, 0.0
             
-            logger.info("最適な接続点を検出しました")
+            logger.success("✅ 最適な接続点を検出しました")
             
             # フレームを画像として保存
             frame1_path = self.processor.save_frame_as_image(frame1, "connection_frame1.png")
             frame2_path = self.processor.save_frame_as_image(frame2, "connection_frame2.png")
             
-            logger.info("動画結合開始...")
+            logger.info("🎬 動画結合開始...")
             
             # 結合動画を作成
             temp_dir = tempfile.gettempdir()
@@ -371,16 +346,16 @@ class FrameBridge:
 📊 分析結果:
 • フレーム類似度: {similarity:.3f}
 • 接続品質: {quality}
-• 結合フレーム: 動画1[{indices[0]}] → 動画2[{indices[1]}]
+• 結合フレーム: 動画1[{indices[0]}] (最後から2つ目) → 動画2[{indices[1]}] (最初から2つ目)
 
 💡 結合情報:
-• 動画1の最適な終了フレームを検出
-• 動画2の最適な開始フレームを検出
-• スムーズな接続を実現
+• 動画1の最後から2つ目のフレームで終了
+• 動画2の最初から2つ目のフレームから開始
+• 固定位置での確実な接続を実現
 
 📁 出力ファイル: {os.path.basename(output_path)}"""
             
-            logger.info("処理完了")
+            logger.success("🎉 処理完了")
             return result_text, output_path, frame1_path, frame2_path, similarity
             
         except Exception as e:
