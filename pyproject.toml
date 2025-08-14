@@ -46,7 +46,7 @@ dependencies = [
     "pillow>=10.0.0",
     "gradio>=5.42.0",
     "scikit-image>=0.21.0",
-    "sourcesage>=6.2.0",
+    "loguru>=0.7.0",
 ]
 
 [project.optional-dependencies]
@@ -73,8 +73,7 @@ Documentation = "https://github.com/Sunwood-ai-labsII/frame-bridge#readme"
 
 [project.scripts]
 frame-bridge = "app:main"
-frame-bridge-test = "test_sample:main"
-frame-bridge-batch = "batch_test:main"
+frame-bridge-batch = "tests.batch_test:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
